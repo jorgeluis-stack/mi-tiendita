@@ -6,8 +6,8 @@ import { CartProvider } from "../context/CartContext";
 const inter = Inter({ subsets: ["latin"] });
 
 export const metadata = {
-  title: "Mi Supermercado",
-  description: "Tienda de prueba",
+  title: "Super Smart",
+  description: "Frutas, Verduras y Abarrotes",
 };
 
 export default function RootLayout({ children }) {

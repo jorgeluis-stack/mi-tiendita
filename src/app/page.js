@@ -50,7 +50,7 @@ export default function Home() {
       <nav className="bg-green-600 p-4 sticky top-0 z-20 shadow-lg">
         <div className="max-w-xl mx-auto flex justify-between items-center text-white">
           <div className="flex flex-col">
-            <h1 className="text-xl font-bold tracking-tight">Mi Tiendita</h1>
+            <h1 className="text-xl font-bold tracking-tight">Super Smart</h1>
             <span className="text-xs text-green-100">Envíos a domicilio</span>
           </div>
           <button onClick={() => setIsCartOpen(true)} className="relative p-2 hover:bg-green-700 rounded-full transition">
