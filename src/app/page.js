@@ -31,7 +31,7 @@ export default function Home() {
 
   const handleCheckout = () => {
     // CAMBIA ESTE NÚMERO POR EL TUYO PARA PROBAR
-    const numeroTienda = "5215555555555"; 
+    const numeroTienda = "529361111815"; 
     
     let mensaje = "Hola! Quiero hacer el siguiente pedido:\n\n";
     cart.forEach(item => {
