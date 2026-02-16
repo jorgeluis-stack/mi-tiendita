@@ -3,174 +3,198 @@ import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { db } from '../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
-import { ShoppingCart, Plus, Minus, X, Heart, CookingPot, Search } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, X, Heart, CookingPot, Search, Settings } from 'lucide-react';
 
 export default function Home() {
   const { cart, addToCart, updateQuantity, total, isCartOpen, setIsCartOpen } = useCart();
   const [products, setProducts] = useState([]);
-  const [filteredProducts, setFilteredProducts] = useState([]); // Para filtros y búsqueda
+  const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
   const [selectedProduct, setSelectedProduct] = useState(null);
   const [searchTerm, setSearchTerm] = useState("");
   const [category, setCategory] = useState("Todos");
 
+  // Productos de ejemplo por si la base de datos está vacía
+  const sampleProducts = [
+    { id: 'ex1', name: "Tomate (Ejemplo)", price: 0, unit: "kg", image: "https://images.unsplash.com/photo-1592924357228-91a4daadcfea?w=300", category: "Verduras", isSample: true, benefits: "Ejemplo de beneficio", recipe: "Ejemplo de receta" },
+    { id: 'ex2', name: "Plátano (Ejemplo)", price: 0, unit: "kg", image: "https://images.unsplash.com/photo-1603833665858-e61d17a86224?w=300", category: "Frutas", isSample: true, benefits: "Ejemplo de beneficio", recipe: "Ejemplo de receta" },
+  ];
+
   useEffect(() => {
     const fetchProducts = async () => {
-      const querySnapshot = await getDocs(collection(db, "productos"));
-      const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
-      setProducts(items);
-      setFilteredProducts(items);
+      try {
+        const querySnapshot = await getDocs(collection(db, "productos"));
+        const items = querySnapshot.docs.map(doc => ({ id: doc.id, ...doc.data() }));
+        // Si no hay productos en Firebase, usamos los de ejemplo
+        const finalProducts = items.length > 0 ? items : sampleProducts;
+        setProducts(finalProducts);
+        setFilteredProducts(finalProducts);
+      } catch (error) {
+        setProducts(sampleProducts);
+      }
       setLoading(false);
     };
     fetchProducts();
   }, []);
 
-  // Lógica de Búsqueda y Filtro
   useEffect(() => {
     let result = products;
-    if (category !== "Todos") {
-      result = result.filter(p => p.category === category);
-    }
-    if (searchTerm) {
-      result = result.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
-    }
+    if (category !== "Todos") result = result.filter(p => p.category === category);
+    if (searchTerm) result = result.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     setFilteredProducts(result);
   }, [searchTerm, category, products]);
 
   const handleCheckout = () => {
     const numeroTienda = "5215555555555"; 
-    let mensaje = "Hola Super Smart! Mi pedido es:\n\n";
-    cart.forEach(item => mensaje += `- ${item.quantity} ${item.unit} de ${item.name} ($${(item.price * item.quantity).toFixed(0)})\n`);
-    mensaje += `\n*TOTAL: $${total.toFixed(2)}*`;
+    let mensaje = `Hola Super Smart! Mi pedido:\n${cart.map(i => `- ${i.quantity} ${i.unit} de ${i.name}`).join('\n')}\n*Total: $${total}*`;
     window.open(`https://wa.me/${numeroTienda}?text=${encodeURIComponent(mensaje)}`, '_blank');
   };
 
   const categories = ["Todos", "Frutas", "Verduras", "Abarrotes", "Lácteos", "Bebidas"];
 
   return (
-    <div className="min-h-screen bg-gray-50 pb-20 font-sans">
-      {/* Navbar con Buscador */}
-      <nav className="bg-green-600 p-3 sticky top-0 z-20 shadow-md">
-        <div className="max-w-xl mx-auto space-y-3">
+    <div className="min-h-screen bg-[#F8FAFC] pb-10 font-sans text-slate-900">
+      
+      {/* Navbar con profundidad */}
+      <nav className="bg-green-600 p-4 sticky top-0 z-20 shadow-[0_4px_20px_rgba(22,163,74,0.3)]">
+        <div className="max-w-xl mx-auto space-y-4">
           <div className="flex justify-between items-center text-white">
-            <div className="flex flex-col">
-              <h1 className="text-xl font-black uppercase leading-none">Super Smart</h1>
-              <span className="text-[9px] font-bold text-green-100 uppercase tracking-widest mt-1">El súper en tu mano</span>
+            <div>
+              <h1 className="text-2xl font-black tracking-tighter italic">SUPER SMART</h1>
+              <p className="text-[10px] font-bold opacity-80 uppercase tracking-[0.3em]">El súper en tu mano</p>
             </div>
-            <button onClick={() => setIsCartOpen(true)} className="relative p-2 bg-green-700 rounded-xl">
-              <ShoppingCart size={22} strokeWidth={2.5} />
-              {cart.length > 0 && <span className="absolute -top-1 -right-1 bg-red-600 text-white text-[9px] rounded-full h-5 w-5 flex items-center justify-center font-black border-2 border-white">{cart.reduce((a, b) => a + b.quantity, 0)}</span>}
+            <button onClick={() => setIsCartOpen(true)} className="relative p-3 bg-green-500 rounded-2xl shadow-[inset_0_2px_4px_rgba(255,255,255,0.3)] border border-green-400">
+              <ShoppingCart size={24} strokeWidth={2.5} />
+              {cart.length > 0 && <span className="absolute -top-2 -right-2 bg-red-500 text-white text-[10px] rounded-full h-6 w-6 flex items-center justify-center font-black border-2 border-white animate-pulse">{cart.length}</span>}
             </button>
           </div>
           
-          {/* BARRA DE BÚSQUEDA */}
-          <div className="relative">
-            <Search className="absolute left-3 top-2.5 text-gray-400" size={16} />
+          <div className="relative group">
+            <Search className="absolute left-4 top-3 text-slate-400 group-focus-within:text-green-600 transition-colors" size={18} />
             <input 
-              type="text" 
-              placeholder="Buscar producto..." 
-              className="w-full bg-white p-2 pl-10 rounded-xl text-sm outline-none text-black font-medium shadow-inner"
-              value={searchTerm}
-              onChange={(e) => setSearchTerm(e.target.value)}
+              type="text" placeholder="¿Qué estás buscando hoy?" 
+              className="w-full bg-white p-3 pl-12 rounded-2xl text-sm font-medium shadow-[0_2px_10px_rgba(0,0,0,0.05)] outline-none focus:ring-2 focus:ring-green-400 transition-all text-black"
+              value={searchTerm} onChange={(e) => setSearchTerm(e.target.value)}
             />
           </div>
         </div>
       </nav>
 
-      {/* FILTROS DE CATEGORÍA */}
-      <div className="max-w-xl mx-auto overflow-x-auto whitespace-nowrap p-4 flex gap-2 no-scrollbar">
+      {/* Categorías con Relieve y Scroll Hint */}
+      <div className="max-w-xl mx-auto overflow-x-auto p-4 flex gap-3 no-scrollbar scroll-smooth">
         {categories.map((cat) => (
           <button
             key={cat}
             onClick={() => setCategory(cat)}
-            className={`px-4 py-2 rounded-2xl text-[10px] font-black uppercase tracking-widest transition-all ${
-              category === cat ? "bg-green-600 text-white shadow-lg shadow-green-200 scale-105" : "bg-white text-gray-400 border border-gray-100"
-            }`}
+            className={`px-6 py-3 rounded-2xl text-xs font-black uppercase tracking-widest transition-all duration-300 flex-shrink-0
+              ${category === cat 
+                ? "bg-green-600 text-white shadow-[0_10px_20px_rgba(22,163,74,0.4)] scale-105 translate-y-[-2px]" 
+                : "bg-white text-slate-400 shadow-[0_4px_6px_rgba(0,0,0,0.05)] border border-slate-100 hover:border-green-200"
+              }`}
           >
             {cat}
           </button>
         ))}
+        {/* Espaciador invisible para forzar el scroll al final */}
+        <div className="flex-shrink-0 w-4"></div>
       </div>
 
-      <main className="max-w-xl mx-auto p-4 pt-0">
-        {loading ? <div className="text-center py-20 font-black text-gray-300 animate-pulse">Cargando...</div> : (
-          <div className="grid grid-cols-2 gap-3">
-            {filteredProducts.map((product) => (
-              <div key={product.id} className="bg-white rounded-[2rem] shadow-sm border border-gray-100 overflow-hidden flex flex-col active:scale-95 transition-all">
-                <img src={product.image} className="h-32 w-full object-cover cursor-pointer" onClick={() => setSelectedProduct(product)} />
-                <div className="p-3 flex-1 flex flex-col justify-between">
-                  <h3 className="font-bold text-gray-800 text-[11px] uppercase leading-tight h-8 overflow-hidden" onClick={() => setSelectedProduct(product)}>{product.name}</h3>
+      <main className="max-w-xl mx-auto p-4">
+        {loading ? <div className="text-center py-20 font-black text-slate-300 animate-pulse">PREPARANDO FRESCHURA...</div> : (
+          <div className="grid grid-cols-2 gap-4">
+            {filteredProducts.map((p) => (
+              <div key={p.id} className="bg-white rounded-[2.5rem] p-2 shadow-[0_8px_15px_rgba(0,0,0,0.03)] border border-slate-100 flex flex-col active:scale-95 transition-all relative">
+                {p.isSample && <span className="absolute top-4 right-4 z-10 bg-orange-500 text-white text-[8px] font-black px-2 py-1 rounded-full shadow-lg">EJEMPLO</span>}
+                <img src={p.image} className="h-32 w-full object-cover rounded-[2rem] mb-2" onClick={() => setSelectedProduct(p)} />
+                <div className="px-2 pb-2 flex-1 flex flex-col justify-between">
+                  <h3 className="font-bold text-slate-800 text-[11px] uppercase leading-tight h-8 overflow-hidden line-clamp-2" onClick={() => setSelectedProduct(p)}>{p.name}</h3>
                   <div className="flex justify-between items-center mt-2">
-                    <span className="font-black text-green-700 text-sm">${product.price}</span>
-                    <button onClick={() => addToCart(product)} className="bg-green-600 text-white w-8 h-8 rounded-xl flex items-center justify-center shadow-md"><Plus size={18} strokeWidth={3} /></button>
+                    <span className="font-black text-green-700 text-base">${p.price}<span className="text-[10px] opacity-50 font-bold">/{p.unit}</span></span>
+                    <button onClick={() => addToCart(p)} className="bg-green-600 text-white w-9 h-9 rounded-2xl flex items-center justify-center shadow-[0_4px_10px_rgba(22,163,74,0.3)] active:bg-green-700"><Plus size={20} strokeWidth={3} /></button>
                   </div>
                 </div>
               </div>
             ))}
-            {filteredProducts.length === 0 && <p className="col-span-2 text-center py-20 text-gray-400 font-bold">No encontramos ese producto...</p>}
           </div>
         )}
       </main>
 
-      {/* MODAL DETALLES (Mismo de antes) */}
+      {/* Footer Discreto con acceso al Admin */}
+      <footer className="max-w-xl mx-auto p-10 text-center space-y-4">
+        <p className="text-[10px] font-bold text-slate-300 uppercase tracking-[0.4em]">Super Smart • Frescura Garantizada</p>
+        <div className="flex justify-center items-center gap-4 opacity-30 grayscale hover:grayscale-0 hover:opacity-100 transition-all">
+            <a href="/admin" className="flex items-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-500 border border-slate-200 px-3 py-1 rounded-full">
+                <Settings size={12} /> Acceso Administrador
+            </a>
+        </div>
+      </footer>
+
+      {/* Los modales de Detalle y Carrito se mantienen igual (con los estilos mejorados de antes) */}
+      {/* ... (Sección de selectedProduct y Carrito Modal que ya teníamos) */}
       {selectedProduct && (
         <div className="fixed inset-0 z-[60] flex items-end justify-center">
-          <div className="absolute inset-0 bg-black/80 backdrop-blur-sm" onClick={() => setSelectedProduct(null)}></div>
-          <div className="bg-white w-full max-w-md rounded-t-[2.5rem] relative z-10 overflow-hidden animate-in slide-in-from-bottom duration-300">
-            <button onClick={() => setSelectedProduct(null)} className="absolute top-4 right-4 bg-black/50 text-white p-2 rounded-full border-2 border-white z-20"><X size={20} strokeWidth={3} /></button>
-            <img src={selectedProduct.image} className="w-full h-56 object-cover" />
-            <div className="p-6">
-              <div className="flex justify-between items-center mb-4"><h2 className="text-2xl font-black text-gray-900 uppercase">{selectedProduct.name}</h2><span className="text-2xl font-black text-green-700">${selectedProduct.price}/{selectedProduct.unit}</span></div>
-              <div className="space-y-3 mb-6">
-                <div className="bg-green-50 p-3 rounded-2xl border border-green-100 flex gap-3 text-black font-medium text-xs leading-snug items-start">
-                    <Heart size={20} className="text-green-600 shrink-0" fill="currentColor" />
-                    <p>{selectedProduct.benefits}</p>
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setSelectedProduct(null)}></div>
+          <div className="bg-white w-full max-w-md rounded-t-[3rem] relative z-10 overflow-hidden shadow-2xl animate-in slide-in-from-bottom duration-300">
+            <img src={selectedProduct.image} className="w-full h-64 object-cover" />
+            <button onClick={() => setSelectedProduct(null)} className="absolute top-6 right-6 bg-white/20 backdrop-blur-md text-white p-2 rounded-full border-2 border-white/50"><X size={24} strokeWidth={3} /></button>
+            <div className="p-8">
+                <div className="flex justify-between items-center mb-6">
+                    <h2 className="text-2xl font-black text-slate-900 uppercase tracking-tighter">{selectedProduct.name}</h2>
+                    <p className="text-2xl font-black text-green-600">${selectedProduct.price}/{selectedProduct.unit}</p>
                 </div>
-                <div className="bg-orange-50 p-3 rounded-2xl border border-orange-100 flex gap-3 text-black font-medium text-xs leading-snug items-start">
-                    <CookingPot size={20} className="text-orange-500 shrink-0" />
-                    <p>{selectedProduct.recipe}</p>
+                <div className="space-y-4 mb-8">
+                    <div className="bg-green-50 p-4 rounded-3xl border border-green-100 flex gap-4">
+                        <Heart className="text-green-600 shrink-0" fill="currentColor" />
+                        <div>
+                            <p className="text-[10px] font-black text-green-800 uppercase mb-1">Beneficios</p>
+                            <p className="text-xs text-green-700 font-medium leading-relaxed">{selectedProduct.benefits}</p>
+                        </div>
+                    </div>
+                    <div className="bg-orange-50 p-4 rounded-3xl border border-orange-100 flex gap-4">
+                        <CookingPot className="text-orange-500 shrink-0" />
+                        <div>
+                            <p className="text-[10px] font-black text-orange-800 uppercase mb-1">Receta sugerida</p>
+                            <p className="text-xs text-orange-700 font-medium leading-relaxed">{selectedProduct.recipe}</p>
+                        </div>
+                    </div>
                 </div>
-              </div>
-              <div className="flex flex-col gap-2">
-                <button onClick={() => { addToCart(selectedProduct); setSelectedProduct(null); }} className="w-full bg-green-600 text-white py-4 rounded-3xl font-black uppercase text-sm tracking-widest shadow-xl shadow-green-600/30 active:scale-95 transition-all">Agregar a mi compra</button>
-                <button onClick={() => setSelectedProduct(null)} className="w-full bg-gray-100 text-gray-500 py-3 rounded-3xl font-bold text-xs uppercase">← Volver</button>
-              </div>
+                <button onClick={() => {addToCart(selectedProduct); setSelectedProduct(null)}} className="w-full bg-green-600 text-white py-5 rounded-[2rem] font-black uppercase tracking-widest shadow-xl shadow-green-500/30">Agregar a mi compra</button>
             </div>
           </div>
         </div>
       )}
 
-      {/* CARRITO (Mismo de antes) */}
       {isCartOpen && (
         <div className="fixed inset-0 z-[70] flex justify-end">
-          <div className="absolute inset-0 bg-black/70 backdrop-blur-sm" onClick={() => setIsCartOpen(false)}></div>
-          <div className="bg-white w-[85%] max-w-sm h-full relative z-10 flex flex-col animate-in slide-in-from-right duration-300 shadow-2xl">
-            <div className="p-4 border-b flex justify-between items-center bg-gray-50">
-              <h2 className="font-black text-sm text-gray-900 uppercase tracking-tighter">Mi Pedido</h2>
-              <button onClick={() => setIsCartOpen(false)} className="p-2 bg-white rounded-xl text-black border border-gray-200"><X size={18} strokeWidth={3} /></button>
+          <div className="absolute inset-0 bg-slate-900/60 backdrop-blur-md" onClick={() => setIsCartOpen(false)}></div>
+          <div className="bg-white w-[88%] max-w-sm h-full relative z-10 flex flex-col shadow-2xl animate-in slide-in-from-right duration-300">
+            <div className="p-6 border-b flex justify-between items-center">
+              <h2 className="font-black text-xl text-slate-900 tracking-tighter uppercase underline decoration-green-500 decoration-4">Mi Pedido</h2>
+              <button onClick={() => setIsCartOpen(false)} className="p-2 bg-slate-100 rounded-2xl"><X size={20} strokeWidth={3} /></button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3">
-              {cart.map((item) => (
-                <div key={item.id} className="flex gap-2 border-b border-gray-50 pb-2 items-center">
-                  <img src={item.image} className="w-12 h-12 rounded-xl object-cover" />
-                  <div className="flex-1">
-                    <h4 className="font-black text-[10px] text-gray-800 uppercase">{item.name}</h4>
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="font-black text-sm text-gray-900">${(item.price * item.quantity).toFixed(0)}</span>
-                      <div className="flex items-center gap-1 bg-gray-100 rounded-xl p-0.5">
-                        <button onClick={() => updateQuantity(item.id, -1)} className="w-7 h-7 flex items-center justify-center bg-white rounded-lg border border-gray-200"><Minus size={14} strokeWidth={3}/></button>
-                        <span className="text-xs font-black w-6 text-center">{item.quantity}</span>
-                        <button onClick={() => updateQuantity(item.id, 1)} className="w-7 h-7 flex items-center justify-center bg-white rounded-lg border border-gray-200"><Plus size={14} strokeWidth={3}/></button>
-                      </div>
+            <div className="flex-1 overflow-y-auto p-6 space-y-4">
+              {cart.map(i => (
+                <div key={i.id} className="flex gap-3 bg-slate-50 p-3 rounded-3xl border border-slate-100">
+                  <img src={i.image} className="w-14 h-14 rounded-2xl object-cover shadow-sm" />
+                  <div className="flex-1 flex flex-col justify-between py-1">
+                    <div className="flex justify-between items-start">
+                        <h4 className="font-bold text-[11px] uppercase text-slate-700 leading-none">{i.name}</h4>
+                        <span className="font-black text-slate-900">${(i.price*i.quantity).toFixed(0)}</span>
+                    </div>
+                    <div className="flex justify-between items-center mt-2">
+                        <div className="flex items-center gap-2 bg-white rounded-xl px-2 py-1 shadow-sm border border-slate-100">
+                            <button onClick={() => updateQuantity(i.id, -1)} className="text-slate-400 hover:text-red-500"><Minus size={14} strokeWidth={3} /></button>
+                            <span className="text-xs font-black w-4 text-center">{i.quantity}</span>
+                            <button onClick={() => updateQuantity(i.id, 1)} className="text-slate-400 hover:text-green-600"><Plus size={14} strokeWidth={3} /></button>
+                        </div>
                     </div>
                   </div>
                 </div>
               ))}
             </div>
-            <div className="p-6 border-t bg-gray-50 space-y-3 shadow-inner">
-                <div className="flex justify-between items-center mb-2 px-1 text-black font-black"><span className="text-[10px] text-gray-400">TOTAL:</span><span className="text-2xl">${total.toFixed(2)}</span></div>
-                <button onClick={handleCheckout} className="w-full bg-[#25D366] text-white py-4 rounded-3xl font-black uppercase text-xs tracking-widest shadow-2xl shadow-green-500/20 active:scale-95 transition-all">Pedir por WhatsApp</button>
-                <button onClick={() => setIsCartOpen(false)} className="w-full bg-white text-gray-500 py-3 rounded-2xl font-bold text-[10px] uppercase border border-gray-200">← Seguir comprando</button>
+            <div className="p-8 border-t bg-white space-y-4">
+                <div className="flex justify-between items-end"><span className="text-xs font-black text-slate-400 uppercase tracking-widest">Total estimado</span><span className="text-3xl font-black text-slate-900 leading-none">${total.toFixed(2)}</span></div>
+                <button onClick={handleCheckout} className="w-full bg-[#25D366] text-white py-5 rounded-[2rem] font-black uppercase tracking-widest shadow-2xl shadow-green-500/40">Pedir por WhatsApp</button>
             </div>
           </div>
         </div>
