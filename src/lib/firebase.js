@@ -3,13 +3,13 @@ import { initializeApp, getApps } from "firebase/app";
 import { getFirestore } from "firebase/firestore";
 
 const firebaseConfig = {
-  // AQUÍ IRÁN TUS CLAVES DE FIREBASE MÁS ADELANTE
-  // Por ahora déjalo así para que la app funcione con datos de prueba
-  apiKey: "API_KEY_FALSA",
-  authDomain: "prueba.firebaseapp.com",
-  projectId: "prueba",
+  apiKey: "TU_API_KEY",
+  authDomain: "TU_PROYECTO.firebaseapp.com",
+  projectId: "TU_PROYECTO_ID",
+  storageBucket: "TU_PROYECTO.appspot.com",
+  messagingSenderId: "TU_SENDER_ID",
+  appId: "TU_APP_ID"
 };
 
-// Evita errores si se inicializa dos veces
 const app = getApps().length === 0 ? initializeApp(firebaseConfig) : getApps()[0];
 export const db = getFirestore(app);
