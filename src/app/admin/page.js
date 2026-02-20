@@ -11,6 +11,9 @@ export default function AdminPanel() {
   const [loading, setLoading] = useState(true);
   const [auth, setAuth] = useState({ user: '', pass: '' });
   const [isAuthenticated, setIsAuthenticated] = useState(false);
+  const [selectedFile, setSelectedFile] = useState(null);
+  const [imagePreview, setImagePreview] = useState('');
+  const [useUrl, setUseUrl] = useState(true);
 
   const categoriasDisponibles = ["Frutas y Verduras", "Abarrotes", "Enfriadores", "Frituras"];
 
@@ -33,6 +36,32 @@ export default function AdminPanel() {
     }
   };
 
+  const handleFileSelect = (e) => {
+    const file = e.target.files[0];
+    if (file) {
+      setSelectedFile(file);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        setImagePreview(reader.result);
+        setForm({ ...form, image: reader.result });
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
+  const handleUrlChange = (e) => {
+    const url = e.target.value;
+    setForm({ ...form, image: url });
+    setImagePreview(url);
+  };
+
+  const toggleImageSource = () => {
+    setUseUrl(!useUrl);
+    setSelectedFile(null);
+    setImagePreview('');
+    setForm({ ...form, image: '' });
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -42,6 +71,8 @@ export default function AdminPanel() {
         await addDoc(collection(db, "productos"), form);
       }
       setForm({ name: '', price: '', unit: 'kg', category: 'Frutas y Verduras', image: '', benefits: '', recipe: '' });
+      setSelectedFile(null);
+      setImagePreview('');
       setEditingId(null);
       fetchProducts();
       alert("¡Inventario actualizado!");
@@ -131,7 +162,53 @@ export default function AdminPanel() {
         </div>
 
         {/* Imagen */}
-        <input type="text" placeholder="URL de la imagen" className="w-full p-4 rounded-2xl bg-slate-50 border-none text-[10px]" value={form.image} onChange={e => setForm({...form, image: e.target.value})} required />
+        <div className="space-y-3">
+          <div className="flex items-center justify-between">
+            <p className="text-[9px] font-black text-slate-400 uppercase px-3 tracking-widest">Imagen:</p>
+            <button
+              type="button"
+              onClick={toggleImageSource}
+              className="text-xs text-green-600 font-bold hover:text-green-700"
+            >
+              {useUrl ? '📁 Subir archivo' : '🔗 Usar URL'}
+            </button>
+          </div>
+          
+          {useUrl ? (
+            <input
+              type="text"
+              placeholder="URL de la imagen"
+              className="w-full p-4 rounded-2xl bg-slate-50 border-none text-[10px]"
+              value={form.image}
+              onChange={handleUrlChange}
+              required
+            />
+          ) : (
+            <div className="space-y-2">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleFileSelect}
+                className="w-full p-4 rounded-2xl bg-slate-50 border-none text-[10px] file:mr-4 file:py-2 file:px-4 file:rounded-xl file:border-0 file:text-xs file:font-bold file:bg-green-50 file:text-green-600 hover:file:bg-green-100"
+                required={!form.image}
+              />
+              {selectedFile && (
+                <p className="text-xs text-slate-500 px-2">📎 {selectedFile.name}</p>
+              )}
+            </div>
+          )}
+          
+          {imagePreview && (
+            <div className="mt-2">
+              <p className="text-[9px] font-black text-slate-400 uppercase px-3 tracking-widest mb-2">Vista previa:</p>
+              <img
+                src={imagePreview}
+                alt="Vista previa"
+                className="w-full h-32 object-cover rounded-xl border-2 border-slate-200"
+              />
+            </div>
+          )}
+        </div>
         
         {/* Salud y Receta */}
         <textarea placeholder="Beneficios..." className="w-full p-4 rounded-2xl bg-slate-50 border-none text-xs h-16" value={form.benefits} onChange={e => setForm({...form, benefits: e.target.value})} />

@@ -42,7 +42,7 @@ export default function Home() {
   }, [searchTerm, category, products]);
 
   const handleCheckout = () => {
-    const numeroTienda = "5215555555555"; // TU WHATSAPP
+    const numeroTienda = "529361111815"; // TU WHATSAPP
     let mensaje = `*PEDIDO SUPER SMART*\n--------------------------\n${cart.map(i => `- ${i.quantity} ${i.unit} de ${i.name} ($${(i.price*i.quantity).toFixed(0)})`).join('\n')}\n--------------------------\n*TOTAL: $${total.toFixed(2)}*\n\nMi dirección es: `;
     window.open(`https://wa.me/${numeroTienda}?text=${encodeURIComponent(mensaje)}`, '_blank');
   };
