@@ -6,7 +6,7 @@ import { collection, getDocs } from 'firebase/firestore';
 import { ShoppingCart, Plus, Minus, X, Heart, CookingPot, Search } from 'lucide-react';
 
 export default function Home() {
-  const { cart, addToCart, updateQuantity, total, isCartOpen, setIsCartOpen } = useCart();
+  const { cart, addToCart, updateQuantity, clearCart, total, isCartOpen, setIsCartOpen } = useCart();
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -42,9 +42,28 @@ export default function Home() {
   }, [searchTerm, category, products]);
 
   const handleCheckout = () => {
-    const numeroTienda = "529361111815"; // TU WHATSAPP
-    let mensaje = `*PEDIDO SUPER SMART*\n--------------------------\n${cart.map(i => `- ${i.quantity} ${i.unit} de ${i.name} ($${(i.price*i.quantity).toFixed(0)})`).join('\n')}\n--------------------------\n*TOTAL: $${total.toFixed(2)}*\n\nMi dirección es: `;
-    window.open(`https://wa.me/${numeroTienda}?text=${encodeURIComponent(mensaje)}`, '_blank');
+    const numeroTienda = "529361111815";
+    
+    // Usamos caracteres de texto sólido que no se rompen
+    const bullet = ">>"; 
+    const line = "--------------------------";
+
+    const mensaje =
+      `*PEDIDO SUPER SMART*\n` +
+      `${line}\n` +
+      cart.map(i => `  ${i.quantity} ${i.unit} de ${i.name} ($${(i.price * i.quantity).toFixed(0)})`).join('\n') + `\n` +
+      `${line}\n` +
+      `*TOTAL: $${total.toFixed(2)}*\n\n` +
+      `${bullet} *PAGO RÁPIDO (BBVA):* 0404040404\n\n` +
+      `${bullet} *¡AHORRA TIEMPO!*\n` +
+      `Compra en línea y recoge de inmediato en caja.\n\n` +
+      `${bullet} *Sucursal:* San Carlos.`;
+
+    const url = `https://wa.me/${numeroTienda}?text=${encodeURIComponent(mensaje)}`;
+    window.open(url, '_blank');
+
+    clearCart();
+    setIsCartOpen(false);
   };
 
   const categories = ["Todos", "Frutas y Verduras", "Abarrotes", "Enfriadores", "Frituras"];
