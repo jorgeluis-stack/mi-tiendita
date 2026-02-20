@@ -9,6 +9,8 @@ export default function AdminPanel() {
   const [form, setForm] = useState({ name: '', price: '', unit: 'kg', category: 'Frutas y Verduras', image: '', benefits: '', recipe: '' });
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
+  const [auth, setAuth] = useState({ user: '', pass: '' });
+  const [isAuthenticated, setIsAuthenticated] = useState(false);
 
   const categoriasDisponibles = ["Frutas y Verduras", "Abarrotes", "Enfriadores", "Frituras"];
 
@@ -22,6 +24,15 @@ export default function AdminPanel() {
 
   useEffect(() => { fetchProducts(); }, []);
 
+  const handleLogin = (e) => {
+    e.preventDefault();
+    if (auth.user === 'adminSmart' && auth.pass === 'SuperSmart2026') {
+      setIsAuthenticated(true);
+    } else {
+      alert('Credenciales incorrectas');
+    }
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
@@ -30,12 +41,41 @@ export default function AdminPanel() {
       } else {
         await addDoc(collection(db, "productos"), form);
       }
-      setForm({ name: '', price: '', unit: 'kg', category: 'Frutas', image: '', benefits: '', recipe: '' });
+      setForm({ name: '', price: '', unit: 'kg', category: 'Frutas y Verduras', image: '', benefits: '', recipe: '' });
       setEditingId(null);
       fetchProducts();
       alert("¡Inventario actualizado!");
     } catch (e) { alert("Error: " + e.message); }
   };
+
+  if (!isAuthenticated) {
+    return (
+      <div className="min-h-screen bg-slate-50 flex items-center justify-center p-4">
+        <form onSubmit={handleLogin} className="bg-white p-8 rounded-2xl shadow-xl w-full max-w-sm space-y-4">
+          <h1 className="text-xl font-black text-slate-800 text-center">Acceso Admin</h1>
+          <input
+            type="text"
+            placeholder="Usuario"
+            className="w-full p-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-900"
+            value={auth.user}
+            onChange={(e) => setAuth({ ...auth, user: e.target.value })}
+            required
+          />
+          <input
+            type="password"
+            placeholder="Contraseña"
+            className="w-full p-3 rounded-xl border border-slate-200 text-sm font-bold text-slate-900"
+            value={auth.pass}
+            onChange={(e) => setAuth({ ...auth, pass: e.target.value })}
+            required
+          />
+          <button type="submit" className="w-full bg-green-600 text-white py-3 rounded-xl font-black uppercase text-xs tracking-widest">
+            Entrar
+          </button>
+        </form>
+      </div>
+    );
+  }
 
   return (
     <div className="min-h-screen bg-slate-50 p-4 pb-20 font-sans max-w-xl mx-auto text-black overflow-x-hidden">
