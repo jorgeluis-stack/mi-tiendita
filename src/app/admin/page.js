@@ -6,11 +6,11 @@ import { Plus, Trash2, Edit, Save, X, Tag, LayoutDashboard } from 'lucide-react'
 
 export default function AdminPanel() {
   const [products, setProducts] = useState([]);
-  const [form, setForm] = useState({ name: '', price: '', unit: 'kg', category: 'Frutas', image: '', benefits: '', recipe: '' });
+  const [form, setForm] = useState({ name: '', price: '', unit: 'kg', category: 'Frutas y Verduras', image: '', benefits: '', recipe: '' });
   const [editingId, setEditingId] = useState(null);
   const [loading, setLoading] = useState(true);
 
-  const categoriasDisponibles = ["Frutas", "Verduras", "Abarrotes", "Lácteos", "Bebidas"];
+  const categoriasDisponibles = ["Frutas y Verduras", "Abarrotes", "Enfriadores", "Frituras"];
 
   const fetchProducts = async () => {
     try {

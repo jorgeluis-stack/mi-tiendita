@@ -3,7 +3,7 @@ import { useState, useEffect } from 'react';
 import { useCart } from '../context/CartContext';
 import { db } from '../lib/firebase';
 import { collection, getDocs } from 'firebase/firestore';
-import { ShoppingCart, Plus, Minus, X, Heart, CookingPot, Search, Settings } from 'lucide-react';
+import { ShoppingCart, Plus, Minus, X, Heart, CookingPot, Search } from 'lucide-react';
 
 export default function Home() {
   const { cart, addToCart, updateQuantity, total, isCartOpen, setIsCartOpen } = useCart();
@@ -47,7 +47,7 @@ export default function Home() {
     window.open(`https://wa.me/${numeroTienda}?text=${encodeURIComponent(mensaje)}`, '_blank');
   };
 
-  const categories = ["Todos", "Frutas", "Verduras", "Abarrotes", "Lácteos", "Bebidas"];
+  const categories = ["Todos", "Frutas y Verduras", "Abarrotes", "Enfriadores", "Frituras"];
 
   return (
     <div className="min-h-screen bg-[#F8FAFC] pb-10 font-sans text-slate-900">
@@ -196,12 +196,7 @@ export default function Home() {
         </div>
       )}
 
-      {/* FOOTER ADMIN */}
-      <footer className="max-w-xl mx-auto p-10 text-center">
-        <a href="/admin" className="opacity-20 flex items-center justify-center gap-1 text-[9px] font-black uppercase tracking-widest text-slate-500 hover:opacity-100 transition-all">
-          <Settings size={12} /> Acceso Administrador
-        </a>
-      </footer>
+      <footer className="max-w-xl mx-auto p-10 text-center"></footer>
     </div>
   );
 }
