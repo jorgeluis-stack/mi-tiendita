@@ -42,7 +42,7 @@ export default function Home() {
   }, [searchTerm, category, products]);
 
   const handleCheckout = () => {
-    const numeroTienda = "529361111815";
+    const numeroTienda = "529361183997";
     
     // Usamos caracteres de texto sólido que no se rompen
     const bullet = ">>"; 
