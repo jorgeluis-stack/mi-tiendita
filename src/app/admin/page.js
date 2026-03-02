@@ -29,7 +29,7 @@ export default function AdminPanel() {
 
   const handleLogin = (e) => {
     e.preventDefault();
-    if (auth.user === 'adminSmart' && auth.pass === 'SuperSmart2026') {
+    if (auth.user === 'admin' && auth.pass === '2040') {
       setIsAuthenticated(true);
     } else {
       alert('Credenciales incorrectas');
