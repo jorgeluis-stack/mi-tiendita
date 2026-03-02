@@ -36,15 +36,55 @@ export function CartProvider({ children }) {
     setCart((prev) => prev.filter((item) => item.id !== id));
   };
 
+  // EL ESCUDO: Reconoce 'pieza', 'Pieza', 'pz', 'PZ' ignorando espacios
+  const esPieza = (unit) => {
+    if (!unit) return false;
+    const normalizado = unit.toLowerCase().trim();
+    return normalizado === 'pieza' || normalizado === 'pz';
+  };
+
   const updateQuantity = (id, amount) => {
     setCart((prev) => 
       prev.map(item => {
         if (item.id === id) {
-          const newQty = Math.max(0.25, item.quantity + amount);
+          let newQty;
+          if (esPieza(item.unit)) {
+            // Para piezas: forzar SIEMPRE entero absoluto, sin importar el valor de amount
+            const currentQty = item.quantity || 1;
+            newQty = Math.max(1, Math.round(currentQty + amount));
+          } else {
+            // Para medidas: decimales, mínimo 0.25
+            newQty = Math.max(0.25, item.quantity + amount);
+          }
           return { ...item, quantity: newQty };
         }
         return item;
-      }).filter(item => item.quantity >= 0.25)
+      }).filter(item => {
+        if (esPieza(item.unit)) {
+          return item.quantity >= 1;
+        } else {
+          return item.quantity >= 0.25;
+        }
+      })
+    );
+  };
+
+  const updateQuantityForPieces = (id, newQuantity) => {
+    setCart((prev) => 
+      prev.map(item => {
+        if (item.id === id && esPieza(item.unit)) {
+          // Forzar valor entero absoluto para piezas
+          const roundedQty = Math.max(1, Math.round(newQuantity));
+          return { ...item, quantity: roundedQty };
+        }
+        return item;
+      }).filter(item => {
+        if (esPieza(item.unit)) {
+          return item.quantity >= 1;
+        } else {
+          return item.quantity >= 0.25;
+        }
+      })
     );
   };
 
@@ -55,7 +95,7 @@ export function CartProvider({ children }) {
   const total = cart.reduce((acc, item) => acc + (item.price * item.quantity), 0);
 
   return (
-    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, clearCart, total, isCartOpen, setIsCartOpen }}>
+    <CartContext.Provider value={{ cart, addToCart, removeFromCart, updateQuantity, updateQuantityForPieces, clearCart, total, isCartOpen, setIsCartOpen }}>
       {children}
     </CartContext.Provider>
   );

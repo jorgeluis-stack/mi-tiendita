@@ -6,7 +6,14 @@ import { collection, getDocs } from 'firebase/firestore';
 import { ShoppingCart, Plus, Minus, X, Heart, CookingPot, Search } from 'lucide-react';
 
 export default function Home() {
-  const { cart, addToCart, updateQuantity, clearCart, removeFromCart, total, isCartOpen, setIsCartOpen } = useCart();
+  const { cart, addToCart, updateQuantity, updateQuantityForPieces, clearCart, removeFromCart, total, isCartOpen, setIsCartOpen } = useCart();
+  // 🛡️ EL ESCUDO: Reconoce 'pieza', 'Pieza', 'pz', 'PZ' ignorando espacios
+  const esPieza = (unit) => {
+    if (!unit) return false;
+    const normalizado = unit.toLowerCase().trim();
+    return normalizado === 'pieza' || normalizado === 'pz';
+  };
+
   const [cartRef, setCartRef] = useState(null);
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
@@ -58,13 +65,14 @@ export default function Home() {
     const mensaje =
       `*PEDIDO SUPER SMART*\n` +
       `${line}\n` +
-      cart.map(i => `  ${i.quantity} ${i.unit} de ${i.name} ($${(i.price * i.quantity).toFixed(0)})`).join('\n') + `\n` +
+      cart.map(i => `  ${i.quantity} ${i.unit} de ${i.name} ($${(i.price * i.quantity).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })})`).join('\n') + `\n` +
       `${line}\n` +
-      `*TOTAL: $${total.toFixed(2)}*\n\n` +
+      `*TOTAL: $${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}*\n\n` +
       `${bullet} *PAGO RÁPIDO (BBVA):* 0404040404\n\n` +
       `${bullet} *¡AHORRA TIEMPO!*\n` +
-      `Compra en línea y recoge de inmediato en caja.\n\n` +
-      `${bullet} *Sucursal:* San Carlos.`;
+      `Compra en línea y recoge de inmediato en tienda.\n\n` +
+      `${bullet} *Sucursal:* Súper Smart La Escalera.\n\n` +
+      `_Siempre pensado para ti, elige estar bien._`;
 
     const url = `https://wa.me/${numeroTienda}?text=${encodeURIComponent(mensaje)}`;
     window.open(url, '_blank');
@@ -195,74 +203,108 @@ export default function Home() {
               <h2 className="font-black text-xs text-slate-400 uppercase tracking-widest">Mi Pedido</h2>
               <button onClick={() => setIsCartOpen(false)} className="p-2 bg-gray-200 text-black rounded-lg border border-gray-300"><X size={18} strokeWidth={3} /></button>
             </div>
-                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white" ref={cartRef}>
-              {cart.map(i => (
-                <div key={i.id} className="flex gap-2 border-b border-gray-50 pb-2 items-center relative">
-                  <button 
-                    onClick={() => removeFromCart(i.id)}
-                    className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full z-10"
-                  >
-                    <X size={12} strokeWidth={3} />
-                  </button>
-                  <img src={i.image} className="w-12 h-12 rounded-lg object-cover" />
-                  <div className="flex-1 min-w-0">
-                    <h4 className="font-black text-[10px] text-gray-800 uppercase truncate">{i.name}</h4>
-                    <div className="flex justify-between items-center mt-1">
-                      <span className="font-black text-sm text-gray-900">${(i.price*i.quantity).toFixed(2).replace('.', ',')}</span>
-                      <div className="flex flex-col gap-2">
-                      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 border border-gray-200">
-                        <button onClick={() => updateQuantity(i.id, -0.25)} className="w-8 h-8 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Minus size={14} strokeWidth={3}/></button>
-                        <input 
-                          type="text" 
-                          value={i.quantity} 
-                          onChange={(e) => {
-                            // Solo permitir números y un punto decimal
-                            let value = e.target.value;
-                            
-                            // Rechazar comas y otros caracteres no válidos
-                            if (value.includes(',')) {
-                              value = value.replace(',', '');
-                            }
-                            
-                            // Solo permitir un punto decimal
-                            const dots = value.match(/\./g);
-                            if (dots && dots.length > 1) {
-                              value = value.replace(/\.(?=.*\.)/g, '');
-                            }
-                            
-                            // Solo permitir números y punto
-                            value = value.replace(/[^0-9.]/g, '');
-                            
-                            // Convertir a número y validar
-                            const numValue = parseFloat(value);
-                            if (!isNaN(numValue) && numValue >= 0.25) {
-                              updateQuantity(i.id, numValue - i.quantity);
-                            }
-                          }}
-                          step="0.25" 
-                          min="0.25" 
-                          className="text-sm font-black w-12 text-center text-black bg-white border border-gray-300 rounded h-8"
-                          placeholder="0.5"
-                        />
-                        <button onClick={() => updateQuantity(i.id, 0.25)} className="w-8 h-8 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Plus size={14} strokeWidth={3}/></button>
+            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white" ref={cartRef}>
+              {cart.map(i => {
+                // 1. EVALUACIÓN CORRECTA DE PIEZA O PZ
+                const isPiece = i.unit ? (i.unit.toLowerCase().trim() === 'pieza' || i.unit.toLowerCase().trim() === 'pz') : false;
+
+                return (
+                  <div key={i.id} className="flex gap-2 border-b border-gray-50 pb-2 items-center relative">
+                    <button 
+                      onClick={() => removeFromCart(i.id)}
+                      className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full z-10"
+                    >
+                      <X size={12} strokeWidth={3} />
+                    </button>
+                    <img src={i.image} className="w-12 h-12 rounded-lg object-cover" />
+                    
+                    <div className="flex-1 min-w-0">
+                      <h4 className="font-black text-[10px] text-gray-800 uppercase truncate">{i.name}</h4>
+                      <p className="text-[9px] text-gray-500 font-semibold uppercase">{i.unit}</p>
+                      
+                      <div className="flex justify-between items-center mt-1">
+                        <span className="font-black text-sm text-gray-900">${(i.price * i.quantity).toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                        
+                        <div className="flex flex-col gap-2">
+                          <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 border border-gray-200">
+                            {isPiece ? (
+                              <>
+                                {/* INTERFAZ DE PIEZAS (Suma 1) */}
+                                <button onClick={() => updateQuantity(i.id, -1)} className="w-8 h-8 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Minus size={14} strokeWidth={3}/></button>
+                                <input 
+                                  type="text" 
+                                  value={Math.round(i.quantity)} 
+                                  onChange={(e) => {
+                                    let value = e.target.value.replace(/[^0-9]/g, '');
+                                    const numValue = parseInt(value);
+                                    if (!isNaN(numValue) && numValue >= 1) updateQuantityForPieces(i.id, numValue);
+                                  }}
+                                  min="1" 
+                                  className="text-sm font-black w-12 text-center text-black bg-white border border-gray-300 rounded h-8"
+                                  placeholder="1"
+                                />
+                                <button onClick={() => updateQuantity(i.id, 1)} className="w-8 h-8 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Plus size={14} strokeWidth={3}/></button>
+                              </>
+                            ) : (
+                              <>
+                                {/* INTERFAZ A GRANEL (Suma 0.25) */}
+                                <button onClick={() => updateQuantity(i.id, -0.25)} className="w-8 h-8 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Minus size={14} strokeWidth={3}/></button>
+                                <input 
+                                  type="text" 
+                                  value={i.quantity} 
+                                  onChange={(e) => {
+                                    let value = e.target.value;
+                                    if (value.includes(',')) value = value.replace(',', '');
+                                    const dots = value.match(/\./g);
+                                    if (dots && dots.length > 1) value = value.replace(/\.(?=.*\.)/g, '');
+                                    value = value.replace(/[^0-9.]/g, '');
+                                    const numValue = parseFloat(value);
+                                    if (!isNaN(numValue) && numValue >= 0.25) updateQuantity(i.id, numValue - i.quantity);
+                                  }}
+                                  step="0.25" min="0.25" 
+                                  className="text-sm font-black w-12 text-center text-black bg-white border border-gray-300 rounded h-8"
+                                  placeholder="0.5"
+                                />
+                                <button onClick={() => updateQuantity(i.id, 0.25)} className="w-8 h-8 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Plus size={14} strokeWidth={3}/></button>
+                              </>
+                            )}
+                          </div>
+
+                          {isPiece ? (
+                            <div className="flex gap-1 justify-center">
+                              <button onClick={() => updateQuantity(i.id, 1 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">1</button>
+                              <button onClick={() => updateQuantity(i.id, 2 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">2</button>
+                              <button onClick={() => updateQuantity(i.id, 3 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">3</button>
+                              <button onClick={() => updateQuantity(i.id, 4 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">4</button>
+                            </div>
+                          ) : (
+                            <div className="flex gap-1 justify-center">
+                              <button onClick={() => updateQuantity(i.id, 0.25 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">0.25</button>
+                              <button onClick={() => updateQuantity(i.id, 0.5 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">0.5</button>
+                              <button onClick={() => updateQuantity(i.id, 1 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">1</button>
+                              <button onClick={() => updateQuantity(i.id, 2 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">2</button>
+                            </div>
+                          )}
+                        </div>
                       </div>
-                      <div className="flex gap-1 justify-center">
-                        <button onClick={() => updateQuantity(i.id, 0.25 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">0.25</button>
-                        <button onClick={() => updateQuantity(i.id, 0.5 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">0.5</button>
-                        <button onClick={() => updateQuantity(i.id, 1 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">1</button>
-                        <button onClick={() => updateQuantity(i.id, 2 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">2</button>
-                      </div>
-                    </div>
                     </div>
                   </div>
-                </div>
-              ))}
+                );
+              })}
             </div>
             <div className="p-6 border-t bg-gray-50 space-y-3 shadow-inner">
-                <div className="flex justify-between items-center mb-2 px-1 font-black text-black leading-none text-black"><span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total:</span><span className="text-2xl">${total.toFixed(2)}</span></div>
-                <button onClick={handleCheckout} className="w-full bg-[#25D366] text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-green-500/20 active:scale-95 transition-all">🛒 Pedir por WhatsApp</button>
-                <button onClick={() => setIsCartOpen(false)} className="w-full bg-white text-gray-500 py-3 rounded-xl font-bold text-[10px] uppercase border border-gray-200 tracking-tighter">← Seguir comprando</button>
-            </div>
+                    <div className="flex justify-between items-center mb-2 px-1 font-black text-black leading-none">
+                      <span className="text-[10px] text-gray-400 font-bold uppercase tracking-widest">Total:</span>
+                      <span className="text-2xl">${total.toLocaleString('en-US', { minimumFractionDigits: 2, maximumFractionDigits: 2 })}</span>
+                    </div>
+                    <button onClick={handleCheckout} className="w-full bg-[#25D366] text-white py-4 rounded-xl font-black uppercase text-[10px] tracking-widest shadow-xl shadow-green-500/20 active:scale-95 transition-all">🛒 Pedir por WhatsApp</button>
+                    <button onClick={() => setIsCartOpen(false)} className="w-full bg-white text-gray-500 py-3 rounded-xl font-bold text-[10px] uppercase border border-gray-200 tracking-tighter">← Seguir comprando</button>
+                    
+                    {/* ESLOGAN */}
+                    <p className="text-center text-[9px] text-gray-400 font-semibold italic pt-2 tracking-wide">
+                      Siempre pensado para ti, elige estar bien.
+                    </p>
+                </div>
           </div>
         </div>
       )}
