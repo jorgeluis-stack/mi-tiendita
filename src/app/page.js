@@ -6,7 +6,8 @@ import { collection, getDocs } from 'firebase/firestore';
 import { ShoppingCart, Plus, Minus, X, Heart, CookingPot, Search } from 'lucide-react';
 
 export default function Home() {
-  const { cart, addToCart, updateQuantity, clearCart, total, isCartOpen, setIsCartOpen } = useCart();
+  const { cart, addToCart, updateQuantity, clearCart, removeFromCart, total, isCartOpen, setIsCartOpen } = useCart();
+  const [cartRef, setCartRef] = useState(null);
   const [products, setProducts] = useState([]);
   const [filteredProducts, setFilteredProducts] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -40,6 +41,12 @@ export default function Home() {
     if (searchTerm) result = result.filter(p => p.name.toLowerCase().includes(searchTerm.toLowerCase()));
     setFilteredProducts(result);
   }, [searchTerm, category, products]);
+
+  useEffect(() => {
+    if (cartRef && cartRef.lastElementChild) {
+      cartRef.lastElementChild.scrollIntoView({ behavior: 'smooth', block: 'end' });
+    }
+  }, [cart]);
 
   const handleCheckout = () => {
     const numeroTienda = "529361183997";
@@ -188,14 +195,20 @@ export default function Home() {
               <h2 className="font-black text-xs text-slate-400 uppercase tracking-widest">Mi Pedido</h2>
               <button onClick={() => setIsCartOpen(false)} className="p-2 bg-gray-200 text-black rounded-lg border border-gray-300"><X size={18} strokeWidth={3} /></button>
             </div>
-            <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white">
+                <div className="flex-1 overflow-y-auto p-4 space-y-3 bg-white" ref={cartRef}>
               {cart.map(i => (
-                <div key={i.id} className="flex gap-2 border-b border-gray-50 pb-2 items-center">
+                <div key={i.id} className="flex gap-2 border-b border-gray-50 pb-2 items-center relative">
+                  <button 
+                    onClick={() => removeFromCart(i.id)}
+                    className="absolute top-0 right-0 p-1 bg-red-500 text-white rounded-full z-10"
+                  >
+                    <X size={12} strokeWidth={3} />
+                  </button>
                   <img src={i.image} className="w-12 h-12 rounded-lg object-cover" />
                   <div className="flex-1 min-w-0">
                     <h4 className="font-black text-[10px] text-gray-800 uppercase truncate">{i.name}</h4>
                     <div className="flex justify-between items-center mt-1">
-                      <span className="font-black text-sm text-gray-900">${(i.price*i.quantity).toFixed(0)}</span>
+                      <span className="font-black text-sm text-gray-900">${(i.price*i.quantity).toFixed(2).replace('.', ',')}</span>
                       <div className="flex flex-col gap-2">
                       <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 border border-gray-200">
                         <button onClick={() => updateQuantity(i.id, -0.25)} className="w-8 h-8 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Minus size={14} strokeWidth={3}/></button>
