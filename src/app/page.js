@@ -196,8 +196,9 @@ export default function Home() {
                     <h4 className="font-black text-[10px] text-gray-800 uppercase truncate">{i.name}</h4>
                     <div className="flex justify-between items-center mt-1">
                       <span className="font-black text-sm text-gray-900">${(i.price*i.quantity).toFixed(0)}</span>
-                      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 border border-gray-200">
-                        <button onClick={() => updateQuantity(i.id, -0.25)} className="w-7 h-7 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Minus size={12} strokeWidth={3}/></button>
+                      <div className="flex flex-col gap-2">
+                      <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 border border-gray-200">
+                        <button onClick={() => updateQuantity(i.id, -0.25)} className="w-8 h-8 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Minus size={14} strokeWidth={3}/></button>
                         <input 
                           type="number" 
                           value={i.quantity} 
@@ -209,10 +210,18 @@ export default function Home() {
                           }}
                           step="0.25" 
                           min="0.25" 
-                          className="text-xs font-black w-10 text-center text-black bg-white border border-gray-300 rounded"
+                          className="text-sm font-black w-12 text-center text-black bg-white border border-gray-300 rounded h-8"
+                          placeholder="0.5"
                         />
-                        <button onClick={() => updateQuantity(i.id, 0.25)} className="w-7 h-7 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Plus size={12} strokeWidth={3}/></button>
+                        <button onClick={() => updateQuantity(i.id, 0.25)} className="w-8 h-8 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Plus size={14} strokeWidth={3}/></button>
                       </div>
+                      <div className="flex gap-1 justify-center">
+                        <button onClick={() => updateQuantity(i.id, 0.25 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">0.25</button>
+                        <button onClick={() => updateQuantity(i.id, 0.5 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">0.5</button>
+                        <button onClick={() => updateQuantity(i.id, 1 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">1</button>
+                        <button onClick={() => updateQuantity(i.id, 2 - i.quantity)} className="px-2 py-1 bg-blue-500 text-white text-[10px] font-black rounded">2</button>
+                      </div>
+                    </div>
                     </div>
                   </div>
                 </div>
