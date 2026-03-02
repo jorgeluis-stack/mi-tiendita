@@ -2,6 +2,7 @@
 import { useState, useEffect } from 'react';
 import { db } from '../../lib/firebase';
 import { collection, addDoc, getDocs, deleteDoc, doc, updateDoc } from 'firebase/firestore';
+import { supabase } from '../../lib/supabase';
 import { Plus, Trash2, Edit, Save, X, Tag, LayoutDashboard } from 'lucide-react';
 
 export default function AdminPanel() {
@@ -14,6 +15,7 @@ export default function AdminPanel() {
   const [selectedFile, setSelectedFile] = useState(null);
   const [imagePreview, setImagePreview] = useState('');
   const [useUrl, setUseUrl] = useState(true);
+  const [uploadingImage, setUploadingImage] = useState(false);
 
   const categoriasDisponibles = ["Frutas y Verduras", "Abarrotes", "Enfriadores", "Frituras"];
 
@@ -65,18 +67,54 @@ export default function AdminPanel() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     try {
-      if (editingId) {
-        await updateDoc(doc(db, "productos", editingId), form);
-      } else {
-        await addDoc(collection(db, "productos"), form);
+      let finalForm = { ...form };
+
+      // Si hay un archivo seleccionado, subirlo a Supabase Storage
+      if (selectedFile && !useUrl) {
+        setUploadingImage(true);
+        
+        // Generar nombre único para el archivo
+        const fileExt = selectedFile.name.split('.').pop();
+        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+        const filePath = `productoSmart/${fileName}`;
+
+        // Subir archivo a Supabase Storage
+        const { data, error } = await supabase.storage
+          .from('productoSmart')
+          .upload(filePath, selectedFile);
+
+        if (error) {
+          throw new Error(`Error al subir imagen: ${error.message}`);
+        }
+
+        // Obtener URL pública
+        const { data: { publicUrl } } = supabase.storage
+          .from('productoSmart')
+          .getPublicUrl(data.path);
+
+        // Reemplazar campo image con URL pública
+        finalForm = { ...finalForm, image: publicUrl };
+        setUploadingImage(false);
       }
+
+      // Guardar en Firebase Firestore
+      if (editingId) {
+        await updateDoc(doc(db, "productos", editingId), finalForm);
+      } else {
+        await addDoc(collection(db, "productos"), finalForm);
+      }
+
+      // Limpiar formulario
       setForm({ name: '', price: '', unit: 'kg', category: 'Frutas y Verduras', image: '', benefits: '', recipe: '' });
       setSelectedFile(null);
       setImagePreview('');
       setEditingId(null);
       fetchProducts();
       alert("¡Inventario actualizado!");
-    } catch (e) { alert("Error: " + e.message); }
+    } catch (e) { 
+      setUploadingImage(false);
+      alert("Error: " + e.message); 
+    }
   };
 
   if (!isAuthenticated) {
@@ -214,8 +252,8 @@ export default function AdminPanel() {
         <textarea placeholder="Beneficios..." className="w-full p-4 rounded-2xl bg-slate-50 border-none text-xs h-16" value={form.benefits} onChange={e => setForm({...form, benefits: e.target.value})} />
         <textarea placeholder="Receta..." className="w-full p-4 rounded-2xl bg-slate-50 border-none text-xs h-16" value={form.recipe} onChange={e => setForm({...form, recipe: e.target.value})} />
         
-        <button type="submit" className="w-full bg-green-600 text-white py-5 rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] shadow-lg shadow-green-200 active:scale-95 transition-all">
-          {editingId ? 'Guardar Cambios' : 'Subir al Inventario'}
+        <button type="submit" className="w-full bg-green-600 text-white py-5 rounded-[2rem] font-black uppercase text-xs tracking-[0.2em] shadow-lg shadow-green-200 active:scale-95 transition-all" disabled={uploadingImage}>
+          {uploadingImage ? 'Subiendo imagen...' : (editingId ? 'Guardar Cambios' : 'Subir al Inventario')}
         </button>
       </form>
 
