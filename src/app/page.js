@@ -213,12 +213,30 @@ export default function Home() {
                       <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-1 border border-gray-200">
                         <button onClick={() => updateQuantity(i.id, -0.25)} className="w-8 h-8 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Minus size={14} strokeWidth={3}/></button>
                         <input 
-                          type="number" 
+                          type="text" 
                           value={i.quantity} 
                           onChange={(e) => {
-                            const value = parseFloat(e.target.value);
-                            if (value >= 0.25) {
-                              updateQuantity(i.id, value - i.quantity);
+                            // Solo permitir números y un punto decimal
+                            let value = e.target.value;
+                            
+                            // Rechazar comas y otros caracteres no válidos
+                            if (value.includes(',')) {
+                              value = value.replace(',', '');
+                            }
+                            
+                            // Solo permitir un punto decimal
+                            const dots = value.match(/\./g);
+                            if (dots && dots.length > 1) {
+                              value = value.replace(/\.(?=.*\.)/g, '');
+                            }
+                            
+                            // Solo permitir números y punto
+                            value = value.replace(/[^0-9.]/g, '');
+                            
+                            // Convertir a número y validar
+                            const numValue = parseFloat(value);
+                            if (!isNaN(numValue) && numValue >= 0.25) {
+                              updateQuantity(i.id, numValue - i.quantity);
                             }
                           }}
                           step="0.25" 
