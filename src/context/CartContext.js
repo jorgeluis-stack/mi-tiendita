@@ -40,11 +40,11 @@ export function CartProvider({ children }) {
     setCart((prev) => 
       prev.map(item => {
         if (item.id === id) {
-          const newQty = Math.max(0, item.quantity + amount);
+          const newQty = Math.max(0.25, item.quantity + amount);
           return { ...item, quantity: newQty };
         }
         return item;
-      }).filter(item => item.quantity > 0)
+      }).filter(item => item.quantity >= 0.25)
     );
   };
 

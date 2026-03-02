@@ -197,9 +197,21 @@ export default function Home() {
                     <div className="flex justify-between items-center mt-1">
                       <span className="font-black text-sm text-gray-900">${(i.price*i.quantity).toFixed(0)}</span>
                       <div className="flex items-center gap-1 bg-gray-100 rounded-lg p-0.5 border border-gray-200">
-                        <button onClick={() => updateQuantity(i.id, -1)} className="w-7 h-7 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Minus size={12} strokeWidth={3}/></button>
-                        <span className="text-xs font-black w-6 text-center text-black">{i.quantity}</span>
-                        <button onClick={() => updateQuantity(i.id, 1)} className="w-7 h-7 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Plus size={12} strokeWidth={3}/></button>
+                        <button onClick={() => updateQuantity(i.id, -0.25)} className="w-7 h-7 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Minus size={12} strokeWidth={3}/></button>
+                        <input 
+                          type="number" 
+                          value={i.quantity} 
+                          onChange={(e) => {
+                            const value = parseFloat(e.target.value);
+                            if (value >= 0.25) {
+                              updateQuantity(i.id, value - i.quantity);
+                            }
+                          }}
+                          step="0.25" 
+                          min="0.25" 
+                          className="text-xs font-black w-10 text-center text-black bg-white border border-gray-300 rounded"
+                        />
+                        <button onClick={() => updateQuantity(i.id, 0.25)} className="w-7 h-7 flex items-center justify-center bg-white text-black rounded-md border border-gray-300"><Plus size={12} strokeWidth={3}/></button>
                       </div>
                     </div>
                   </div>
